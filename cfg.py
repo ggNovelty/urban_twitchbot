@@ -8,4 +8,6 @@ NICK = "" #your twitch username, in quotes
 PASS = "oauth:" #your oauth, in quotes
 CHAN = "" #name of the channel your bot will service, in quotes
 
+NO_POINTS = ["", ""] #any users you don't want to gain points, such as bots.
+#users must be lowercase, in quotes, and seperated by a comma.
 RATE = (20/30)
