@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # bot.py
-#TODO: change print('statements') into logging.debug('statements')
 
 
 import cfg
@@ -52,7 +51,7 @@ def chatbot():
         username = re.search(r"\w+", response).group(0)
         message = chat_msg.sub("", response)
         message = message.rstrip()
-        #print(username + ": " + message)
+        logging.debug('  '+ username + ": " + message)
 
 
         if response == "PING :tmi.twitch.tv\r\n":
@@ -63,20 +62,15 @@ def chatbot():
 
                 bot_says = "i'm confused.. what did you ask?"
 
-                print(username + ": " + message)
-
                 if (message == '!urban') or (message == '!urban '):
                     bot_says = "!urban - defines a word using urban dictionary."
-
-                #elif message == "!urban random":
-                    #bot_says = 'TODO?'
 
                 else:
                     search_term = message[7:]
                     bot_says = urban(search_term)
 
                 chat(irc, bot_says)
-                print('will.exe:', bot_says, '\n')
+                logging.debug('  will.exe: '+ bot_says)
 
             elif re.match(r'^!will', message):
 
@@ -84,48 +78,46 @@ def chatbot():
                          + 'definition of a word (if it exists). '\
                          + '!points help - commands for !points. '\
                          + 'made with python.' 
-                print(username + ": " + message)
-                print('will.exe:', bot_says, '\n')
 
                 chat(irc, bot_says)
+                logging.debug('  will.exe: '+ bot_says)
 
             elif re.match(r'^!bots', message):
 
                 bot_says = 'MrDestructoid'
-                print(username + ": " + message)
-                print('will.exe:', bot_says, '\n')
             
                 chat(irc, bot_says)
+                logging.debug('  will.exe: '+ bot_says)
             
             elif re.match(r'^!points', message):
 
                 if (message == '!points') or (message == '!points '):
-                    print(username + ": " + message)
-                    with shelve.open(cfg.CHAN[1:]) as s:
+                    with shelve.open('./'+cfg.CHAN[1:]) as s:
                         if username in s:
                             user_points = str(s[username])
-                            bot_says = '@' + username + ' has ' + user_points \
-                                     + ' points.'
-                        else:
-                            bot_says = '@' + username + ' you got no points, '\
-                                     + 'watch more stream bruh.'
+                            bot_says = '@' + username + ' has ' \
+                                    + user_points \
+                                    + ' points.'
 
-                    print('will.exe:', bot_says + '\n')
+                        else:
+                            bot_says = ('@' + username \
+                                    + ' you got no points, '\
+                                    + 'watch more stream bruh.')
+
                     chat(irc, bot_says)
+                    logging.debug('  will.exe: '+ bot_says)
                 
                 elif message == '!points help':
-                    print(username + ": " + message)
                     bot_says = '@' + username + ' :' + '!points commands: ' \
                              + "'!points', '!points claim' " \
                              + "'!points top'. points cannot be earned while"\
                              + " streamer is offline."
 
-                    print('will.exe:', bot_says + '\n')
                     chat(irc, bot_says)
+                    logging.debug('  will.exe: '+ bot_says)
 
                 elif message == '!points claim':
-                    print(username + ": " + message)
-                    redeemed_filename = cfg.CHAN[1:] + 'REDEEMED'
+                    redeemed_filename = './' + cfg.CHAN[1:] + 'REDEEMED'
 
                     current_users = requests.get(\
                                     'https://tmi.twitch.tv/group/user/'\
@@ -140,7 +132,7 @@ def chatbot():
                                 bot_says = '@'+username+' you may only claim '\
                                          + 'points once per stream.'
                             else:
-                                with shelve.open(cfg.CHAN[1:]) as s:
+                                with shelve.open('./'+cfg.CHAN[1:]) as s:
                                     if username in s:
                                         s[username] += 100
                                         bot_says = '@'+username+' claimed 100'\
@@ -158,13 +150,12 @@ def chatbot():
                         bot_says = cfg.CHAN[1:] + ' must be online to claim,'\
                                  + ' check back later.'
 
-                    print('will.exe:', bot_says + '\n')
                     chat(irc, bot_says)
+                    logging.debug('  will.exe: '+ bot_says)
 
                 elif message == '!points top':
-                    print(username + ": " + message)
                     try:
-                        with shelve.open(cfg.CHAN[1:]) as s:
+                        with shelve.open('./'+cfg.CHAN[1:]) as s:
                             score_tups = sorted(s.items(), key=lambda x: \
                                                   x[1])[::-1]
                             top_five = score_tups[:5]
@@ -176,27 +167,26 @@ def chatbot():
                     +'Fourth: '+top_five[3][0]+' ('+str(top_five[3][1])+') '\
                     +'Fifth: '+top_five[4][0]+' ('+str(top_five[4][1])+')'
 
-                        print('will.exe:', bot_says + '\n')
                         chat(irc, bot_says)
+                        logging.debug('  will.exe: '+ bot_says)
                     except:
-                        bot_says = 'idk LUL'
-                        print('will.exe:', bot_says, '\n')
+                        bot_says = 'idk LuL'
                         chat(irc, bot_says)
+                        logging.debug('  will.exe: '+ bot_says)
 
                 elif message == '!points redeem':
-                    print(username + ": " + message)
                     bot_says = 'what to do with points. gamble?'\
                              + 'buy mod with 1M points? Kappa '
 
-                    print('will.exe:', bot_says + '\n')
                     chat(irc, bot_says)
+                    logging.debug('  will.exe: '+ bot_says)
 
             sleep(1 / cfg.RATE)
 
 def add_points(current_users):
     while True: 
         sleep(60)
-        print('checking users after 1 minute..')
+        logging.debug('checking users after 1 minute..')
 
         new_users = requests.get('https://tmi.twitch.tv/group/user/'\
                                  + cfg.CHAN[1:] + '/chatters')
@@ -207,39 +197,47 @@ def add_points(current_users):
         if cfg.CHAN[1:] in current_users:
             streamer_online = True
             for user in current_users:
-                if (user in new_users) and (user != cfg.CHAN[1:]):
-                    if user not in cfg.NO_POINTS:
-                        with shelve.open(cfg.CHAN[1:]) as s:
-                            if user in s:
-                                s[user] += 1
-                            else:
-                                s[user] = 1
+                if (user in new_users) and (user not in cfg.NO_POINTS):
+                    with shelve.open(cfg.CHAN[1:]) as s:
+                        if user in s:
+                            s[user] += 1
+                        else:
+                            s[user] = 1
 
-            print('scores updated.\n')
+            logging.debug('scores updated.')
+            timestamped = False
 
             if cfg.CHAN[1:] not in new_users:
-                print('streamer disconnected.\n')
+                logging.debug('streamer disconnected.')
 
         elif cfg.CHAN[1:] in new_users:
             streamer_online = True
-            print('streamer online!\n')
+            logging.debug('streamer online!')
+            timestamped = False
 
         else: #streamer not in either user set (offline)
             streamer_online = False
-            print('streamer offline.\n')
+            logging.debug('streamer offline.')
 
-        if not streamer_online:
-
+        if (not streamer_online) and (not timestamped):
             offline_time = datetime.now()
+            timestamped = True
+            logging.debug('offline_time set, '\
+                    +'REDEEMED flagged for deletion.')
+
             between_streams = timedelta(hours=4)
             reset_claim = offline_time + between_streams
 
             if datetime.now() > reset_claim:
                 os.remove('./'+cfg.CHAN[1:]+'REDEEMED.db')
-                print('file removed, users may redeem again.\n')
+                logging.debug('file removed, users may redeem again.')
+                timestamped = False
 
         current_users = new_users
 
+
+logging.basicConfig(filename='./'+cfg.CHAN[1:]\
+                            +'LOG.log',level=logging.DEBUG)
 
 irc = socket.socket()
 irc.connect((cfg.HOST, cfg.PORT))
@@ -248,19 +246,18 @@ irc.send(bytes("PASS {}\r\n".format(cfg.PASS), 'utf-8'))
 irc.send(bytes("NICK {}\r\n".format(cfg.NICK), 'utf-8'))
 irc.send(bytes("JOIN {}\r\n".format(cfg.CHAN), 'utf-8'))
 
-print('connected..\nlurkin tha server..')
-
-current_users = requests.get('https://tmi.twitch.tv/group/user/'\
+login_users = requests.get('https://tmi.twitch.tv/group/user/'\
                              + cfg.CHAN[1:] + '/chatters')
-current_users = current_users.json()
-current_users = current_users['chatters']['moderators']\
-	      + current_users['chatters']['viewers']
+login_users = login_users.json()
+login_users = login_users['chatters']['moderators']\
+	      + login_users['chatters']['viewers']
 
-print(len(current_users), 'users watching now.\n')
+logging.debug('Connected to '+cfg.CHAN[1:]+' with'+str(len(login_users))\
+            +'users watching now.')
 
 chat_loop = threading.Thread(name='chatbot', target=chatbot)
 point_loop = threading.Thread(name='add_points', target=add_points,\
-                              args=[current_users])
+                              args=[login_users])
 
 
 chat_loop.start()
