@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 # bot.py
 
+#TODO: Spend points?
 
 import cfg
 
 import logging
-import shelve
-import socket
+import os
 import re
 import requests
+import shelve
+import socket
+import sys
 import threading
-import os
 
 from time import sleep
 from datetime import datetime, timedelta
@@ -70,29 +72,28 @@ def chatbot():
                     bot_says = urban(search_term)
 
                 chat(irc, bot_says)
-                logging.debug('  will.exe: '+ bot_says)
+                logging.debug('  bot: '+ bot_says)
 
-            elif re.match(r'^!will', message):
+            elif re.match(r'^!commands', message):
 
                 bot_says = 'commands: !urban word - gives the urban ' \
                          + 'definition of a word (if it exists). '\
-                         + '!points help - commands for !points. '\
-                         + 'made with python.' 
+                         + '!points help - commands for !points. '
 
                 chat(irc, bot_says)
-                logging.debug('  will.exe: '+ bot_says)
+                logging.debug('  bot: '+ bot_says)
 
             elif re.match(r'^!bots', message):
 
                 bot_says = 'MrDestructoid'
             
                 chat(irc, bot_says)
-                logging.debug('  will.exe: '+ bot_says)
+                logging.debug('  bot: '+ bot_says)
             
             elif re.match(r'^!points', message):
 
                 if (message == '!points') or (message == '!points '):
-                    with shelve.open('./'+cfg.CHAN[1:]) as s:
+                    with shelve.open(os.path.join(sys.path[0],cfg.CHAN[1:])) as s:
                         if username in s:
                             user_points = str(s[username])
                             bot_says = '@' + username + ' has ' \
@@ -105,7 +106,7 @@ def chatbot():
                                     + 'watch more stream bruh.')
 
                     chat(irc, bot_says)
-                    logging.debug('  will.exe: '+ bot_says)
+                    logging.debug('  bot: '+ bot_says)
                 
                 elif message == '!points help':
                     bot_says = '@' + username + ' :' + '!points commands: ' \
@@ -114,10 +115,10 @@ def chatbot():
                              + " streamer is offline."
 
                     chat(irc, bot_says)
-                    logging.debug('  will.exe: '+ bot_says)
+                    logging.debug('  bot: '+ bot_says)
 
                 elif message == '!points claim':
-                    redeemed_filename = './' + cfg.CHAN[1:] + 'REDEEMED'
+                    redeemed_filename = cfg.CHAN[1:] + 'REDEEMED'
 
                     current_users = requests.get(\
                                     'https://tmi.twitch.tv/group/user/'\
@@ -127,12 +128,12 @@ def chatbot():
 	                          + current_users['chatters']['viewers']
 
                     if cfg.CHAN[1:] in current_users:
-                        with shelve.open(redeemed_filename) as redeemed:
+                        with shelve.open(os.path.join(sys.path[0],redeemed_filename)) as redeemed:
                             if username in redeemed:
                                 bot_says = '@'+username+' you may only claim '\
                                          + 'points once per stream.'
                             else:
-                                with shelve.open('./'+cfg.CHAN[1:]) as s:
+                                with shelve.open(os.path.join(sys.path[0],cfg.CHAN[1:])) as s:
                                     if username in s:
                                         s[username] += 100
                                         bot_says = '@'+username+' claimed 100'\
@@ -151,11 +152,11 @@ def chatbot():
                                  + ' check back later.'
 
                     chat(irc, bot_says)
-                    logging.debug('  will.exe: '+ bot_says)
+                    logging.debug('  bot: '+ bot_says)
 
                 elif message == '!points top':
                     try:
-                        with shelve.open('./'+cfg.CHAN[1:]) as s:
+                        with shelve.open(os.path.join(sys.path[0],cfg.CHAN[1:])) as s:
                             score_tups = sorted(s.items(), key=lambda x: \
                                                   x[1])[::-1]
                             top_five = score_tups[:5]
@@ -168,18 +169,18 @@ def chatbot():
                     +'Fifth: '+top_five[4][0]+' ('+str(top_five[4][1])+')'
 
                         chat(irc, bot_says)
-                        logging.debug('  will.exe: '+ bot_says)
+                        logging.debug('  bot: '+ bot_says)
                     except:
-                        bot_says = 'idk LuL'
+                        bot_says = 'need more viewers to have a top 5.'
                         chat(irc, bot_says)
-                        logging.debug('  will.exe: '+ bot_says)
+                        logging.debug('  bot: '+ bot_says)
 
                 elif message == '!points redeem':
                     bot_says = 'what to do with points. gamble?'\
                              + 'buy mod with 1M points? Kappa '
 
                     chat(irc, bot_says)
-                    logging.debug('  will.exe: '+ bot_says)
+                    logging.debug('  bot: '+ bot_says)
 
             sleep(1 / cfg.RATE)
 
@@ -198,7 +199,7 @@ def add_points(current_users):
             streamer_online = True
             for user in current_users:
                 if (user in new_users) and (user not in cfg.NO_POINTS):
-                    with shelve.open(cfg.CHAN[1:]) as s:
+                    with shelve.open(os.path.join(sys.path[0],cfg.CHAN[1:])) as s:
                         if user in s:
                             s[user] += 1
                         else:
@@ -236,8 +237,8 @@ def add_points(current_users):
         current_users = new_users
 
 
-logging.basicConfig(filename='./'+cfg.CHAN[1:]\
-                            +'LOG.log',level=logging.DEBUG)
+logging.basicConfig(filename=(os.path.join(sys.path[0], cfg.CHAN[1:]\
+                            +'LOG.log')),level=logging.DEBUG)
 
 irc = socket.socket()
 irc.connect((cfg.HOST, cfg.PORT))
