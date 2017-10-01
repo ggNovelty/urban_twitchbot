@@ -37,6 +37,8 @@ def urban(word):
         bot_says = re.search(definition_regex, page)
         bot_says = bot_says.group(0)
         bot_says = bot_says[15:-15]
+        bot_says = re.sub(r'\\r', '', bot_says)
+        bot_says = re.sub(r'\\n', '', bot_says)
         bot_says = word + '- ' + bot_says
         if len(bot_says) >= 500:
             bot_says = bot_says[:499]
@@ -230,8 +232,13 @@ def add_points(current_users):
             reset_claim = offline_time + between_streams
 
             if datetime.now() > reset_claim:
-                os.remove('./'+cfg.CHAN[1:]+'REDEEMED.db')
-                logging.debug('file removed, users may redeem again.')
+                try:
+                    os.remove(os.path.join(sys.path[0],cfg.CHAN[1:]\
+                            +'REDEEMED.db'))
+                    logging.debug('file removed, users may redeem again.')
+                except:
+                    logging.debug('  could not remove "redeemed, "'\
+                            + 'file not found?')
                 timestamped = False
 
         current_users = new_users
