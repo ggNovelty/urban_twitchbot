@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 chat_msg=re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
 
 #regex, tries to extract an urbandictionary word's definition.
-definition_regex = r'.definition.\:(.+?)(permalink.\:|author.\: ..|current_vot|thumbs_up.\:|thumbs_down|example.\:..|word.\:.....|defid.\:....)'
+#definition_regex = r'.definition.\:(.+?)(permalink.\:|author.\: ..|current_vot|thumbs_up.\:|thumbs_down|example.\:..|word.\:.....|defid.\:....)'
 
 
 def chat(sock, msg):
@@ -30,24 +30,39 @@ def chat(sock, msg):
 
 def urban(word):
     built_url = 'https://api.urbandictionary.com/v0/define?term=' + word
-    page = requests.get(built_url)
-    page = str(page.json())
-    
-    if re.search(definition_regex, page):
-        bot_says = re.search(definition_regex, page)
-        bot_says = bot_says.group(0)
-        bot_says = bot_says[15:-15]
-        bot_says = re.sub(r'\\r', '', bot_says)
-        bot_says = re.sub(r'\\n', '', bot_says)
-        bot_says = word + '- ' + bot_says
+    r = requests.get(built_url)
+
+    if len(r.json()['list']) > 0:
+
+        top_definition = r.json()['list'][0]['definition']
+        high_def_score = r.json()['list'][0]['thumbs_up'] / \
+                         r.json()['list'][0]['thumbs_down']
+
+        if len(r.json()['list']) > 1:
+
+            for definition in r.json()['list'][1:]:
+                if definition['thumbs_up'] + definition['thumbs_down'] > 50:
+                    def_score = definition['thumbs_up'] / definition['thumbs_down']
+
+                    if def_score >= high_def_score:
+                        top_definition = definition['definition']
+                        high_def_score = def_score
+
+        top_definition = re.sub(r'\r', ' ', top_definition)
+        top_definition = re.sub(r'\n', ' ', top_definition)
+        top_definition = re.sub(r'   ', ' ', top_definition)
+
+        bot_says = word + '- ' + top_definition
         if len(bot_says) >= 500:
             bot_says = bot_says[:499]
+
         return bot_says
-    
+
     else:
+
         bot_says = word + ' is undefined!'
         return bot_says
-    
+
 def chatbot():
     while True:
         response = irc.recv(1204).decode('utf-8')
@@ -55,7 +70,7 @@ def chatbot():
         username = re.search(r"\w+", response).group(0)
         message = chat_msg.sub("", response)
         message = message.rstrip()
-        logging.debug('  '+ username + ": " + message)
+        #logging.debug('  '+ username + ": " + message)
 
 
         if response == "PING :tmi.twitch.tv\r\n":
@@ -74,7 +89,6 @@ def chatbot():
                     bot_says = urban(search_term)
 
                 chat(irc, bot_says)
-                logging.debug('  bot: '+ bot_says)
 
             elif re.match(r'^!commands', message):
 
@@ -83,14 +97,12 @@ def chatbot():
                          + '!points help - commands for !points. '
 
                 chat(irc, bot_says)
-                logging.debug('  bot: '+ bot_says)
 
             elif re.match(r'^!bots', message):
 
                 bot_says = 'MrDestructoid'
             
                 chat(irc, bot_says)
-                logging.debug('  bot: '+ bot_says)
             
             elif re.match(r'^!points', message):
 
@@ -108,7 +120,6 @@ def chatbot():
                                     + 'watch more stream bruh.')
 
                     chat(irc, bot_says)
-                    logging.debug('  bot: '+ bot_says)
                 
                 elif message == '!points help':
                     bot_says = '@' + username + ' :' + '!points commands: ' \
@@ -117,7 +128,6 @@ def chatbot():
                              + " streamer is offline."
 
                     chat(irc, bot_says)
-                    logging.debug('  bot: '+ bot_says)
 
                 elif message == '!points claim':
                     redeemed_filename = cfg.CHAN[1:] + 'REDEEMED'
@@ -154,7 +164,6 @@ def chatbot():
                                  + ' check back later.'
 
                     chat(irc, bot_says)
-                    logging.debug('  bot: '+ bot_says)
 
                 elif message == '!points top':
                     try:
@@ -171,18 +180,15 @@ def chatbot():
                     +'Fifth: '+top_five[4][0]+' ('+str(top_five[4][1])+')'
 
                         chat(irc, bot_says)
-                        logging.debug('  bot: '+ bot_says)
                     except:
                         bot_says = 'need more viewers to have a top 5.'
                         chat(irc, bot_says)
-                        logging.debug('  bot: '+ bot_says)
 
                 elif message == '!points redeem':
                     bot_says = 'what to do with points. gamble?'\
                              + 'buy mod with 1M points? Kappa '
 
                     chat(irc, bot_says)
-                    logging.debug('  bot: '+ bot_says)
 
             sleep(1 / cfg.RATE)
 
