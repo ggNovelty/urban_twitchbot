@@ -212,7 +212,6 @@ def chatbot():
 def add_points(current_users):
     while True: 
         sleep(60)
-        logging.debug('checking users after 1 minute..')
 
         new_users = requests.get('https://tmi.twitch.tv/group/user/'\
                                  + cfg.CHAN[1:] + '/chatters')
@@ -230,7 +229,6 @@ def add_points(current_users):
                         else:
                             s[user] = 1
 
-            logging.debug('scores updated.')
             timestamped = False
 
             if cfg.CHAN[1:] not in new_users:
@@ -254,15 +252,15 @@ def add_points(current_users):
             between_streams = timedelta(hours=4)
             reset_claim = offline_time + between_streams
 
-            if datetime.now() > reset_claim:
-                try:
-                    os.remove(os.path.join(sys.path[0],cfg.CHAN[1:]\
-                            +'REDEEMED.db'))
-                    logging.debug('file removed, users may redeem again.')
-                except:
-                    logging.debug('  could not remove "redeemed, "'\
-                            + 'file not found?')
-                timestamped = False
+        if datetime.now() > reset_claim:
+            try:
+                os.remove(os.path.join(sys.path[0],cfg.CHAN[1:]\
+                        +'REDEEMED.db'))
+                logging.debug('file removed, users may redeem again.')
+            except:
+                logging.debug('  could not remove "redeemed, "'\
+                        + 'file not found?')
+            timestamped = False
 
         current_users = new_users
 
