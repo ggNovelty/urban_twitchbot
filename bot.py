@@ -35,14 +35,30 @@ def urban(word):
     if len(r.json()['list']) > 0:
 
         top_definition = r.json()['list'][0]['definition']
-        high_def_score = r.json()['list'][0]['thumbs_up'] / \
-                         r.json()['list'][0]['thumbs_down']
+
+        thumbs_up = 1
+        thumbs_down = 1
+        
+        #prevents div by 0 exception
+        if r.json()['list'][0]['thumbs_up'] > 1:
+            thumbs_up = r.json()['list'][0]['thumbs_up']
+        if r.json()['list'][0]['thumbs_down'] > 1:
+            thumbs_down = r.json()['list'][0]['thumbs_down']
+
+        high_def_score = thumbs_up / thumbs_down 
 
         if len(r.json()['list']) > 1:
 
             for definition in r.json()['list'][1:]:
                 if definition['thumbs_up'] + definition['thumbs_down'] > 50:
-                    def_score = definition['thumbs_up'] / definition['thumbs_down']
+
+                    #prevents div by 0 exception
+                    if definition['thumbs_up'] > 1:
+                        thumbs_up = definition['thumbs_up']
+                    if definition['thumbs_down'] > 1:
+                        thumbs_down = definition['thumbs_down']
+                    
+                    def_score = thumbs_up / thumbs_down
 
                     if def_score >= high_def_score:
                         top_definition = definition['definition']
@@ -61,6 +77,7 @@ def urban(word):
     else:
 
         bot_says = word + ' is undefined!'
+
         return bot_says
 
 def chatbot():
