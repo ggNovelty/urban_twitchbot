@@ -16,6 +16,7 @@ import threading
 
 from time import sleep
 from datetime import datetime, timedelta
+from urllib.parse import quote
 
 
 #regex, pulls chat from twitch irc 'response'.
@@ -29,7 +30,11 @@ def chat(sock, msg):
     sock.send(bytes("PRIVMSG {} :{} \r\n".format(cfg.CHAN, msg), 'utf-8'))
 
 def urban(word):
-    built_url = 'https://api.urbandictionary.com/v0/define?term=' + word
+
+    word_in_ascii = quote(word)
+    built_url = 'https://api.urbandictionary.com/v0/define?term=' \ 
+              + word_in_ascii
+
     r = requests.get(built_url)
 
     if len(r.json()['list']) > 0:
