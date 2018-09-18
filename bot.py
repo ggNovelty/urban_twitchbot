@@ -32,42 +32,13 @@ def chat(sock, msg):
 def urban(word):
 
     word_in_ascii = quote(word)
-    built_url = 'https://api.urbandictionary.com/v0/define?term=' \ 
-              + word_in_ascii
+    built_url = 'https://api.urbandictionary.com/v0/define?term=' + word_in_ascii
 
     r = requests.get(built_url)
 
     if len(r.json()['list']) > 0:
 
         top_definition = r.json()['list'][0]['definition']
-
-        thumbs_up = 1
-        thumbs_down = 1
-        
-        #prevents div by 0 exception
-        if r.json()['list'][0]['thumbs_up'] > 1:
-            thumbs_up = r.json()['list'][0]['thumbs_up']
-        if r.json()['list'][0]['thumbs_down'] > 1:
-            thumbs_down = r.json()['list'][0]['thumbs_down']
-
-        high_def_score = thumbs_up / thumbs_down 
-
-        if len(r.json()['list']) > 1:
-
-            for definition in r.json()['list'][1:]:
-                if definition['thumbs_up'] + definition['thumbs_down'] > 50:
-
-                    #prevents div by 0 exception
-                    if definition['thumbs_up'] > 1:
-                        thumbs_up = definition['thumbs_up']
-                    if definition['thumbs_down'] > 1:
-                        thumbs_down = definition['thumbs_down']
-                    
-                    def_score = thumbs_up / thumbs_down
-
-                    if def_score >= high_def_score:
-                        top_definition = definition['definition']
-                        high_def_score = def_score
 
         top_definition = re.sub(r'\r', ' ', top_definition)
         top_definition = re.sub(r'\n', ' ', top_definition)
