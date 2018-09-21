@@ -186,6 +186,10 @@ def chatbot():
             sleep(1 / cfg.RATE)
 
 def add_points(current_users):
+
+    write_every_five = 0
+    current_users_dict = {user:0 for user in current_users}
+
     while True: 
         sleep(60)
 
@@ -197,21 +201,36 @@ def add_points(current_users):
 
         if cfg.CHAN[1:] in current_users:
             streamer_online = True
+
             for user in current_users:
-                if (user in new_users) and (user not in cfg.NO_POINTS):
-                    with shelve.open(os.path.join(sys.path[0],cfg.CHAN[1:])) as s:
-                        if user in s:
-                            s[user] += 1
-                        else:
-                            s[user] = 1
+                if user in new_users:
+                    current_users_dict[user] += 1
 
             timestamped = False
 
+            write_every_five += 1
+
+            if write_every_five >= 5:
+                with shelve.open(os.path.join(sys.path[0],cfg.CHAN[1:])) as s:
+                    for user in current_users_dict:
+                        if user in s:
+                            s[user] += current_users_dict[user]
+                            current_users_dict[user] = 0
+
+                        else:
+                            s[user] = current_users_dict[user]
+                            current_users_dict[user] = 0
+
+                current_users_dict = {user:0 for user in current_users}
+                write_every_five = 0
+
             if cfg.CHAN[1:] not in new_users:
+                
                 logging.debug('streamer disconnected.')
 
         elif cfg.CHAN[1:] in new_users:
             streamer_online = True
+            write_every_five = 0
             logging.debug('streamer online!')
             timestamped = False
 
