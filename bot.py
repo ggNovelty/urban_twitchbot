@@ -83,6 +83,12 @@ def chatbot():
 
                 chat(irc, bot_says)
 
+            elif re.match(r'^!echo', message):
+
+                bot_says = message[6:]
+
+                chat(irc, bot_says)
+
             elif re.match(r'^!commands', message):
 
                 bot_says = 'commands: !urban word - gives the urban ' \
@@ -184,6 +190,9 @@ def chatbot():
                     chat(irc, bot_says)
 
             sleep(1 / cfg.RATE)
+
+#def echo(delay):
+    
 
 def add_points(current_users):
 
