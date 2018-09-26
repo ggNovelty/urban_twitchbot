@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#/usr/bin/env python3
 # bot.py
 
 #TODO: Spend points?
@@ -191,13 +191,12 @@ def chatbot():
 
             sleep(1 / cfg.RATE)
 
-#def echo(delay):
-    
 
 def add_points(current_users):
 
-    write_every_five = 0
     current_users_dict = {user:0 for user in current_users}
+    streamer_online = False
+    timestamped = False
 
     while True: 
         sleep(60)
@@ -217,38 +216,33 @@ def add_points(current_users):
 
             timestamped = False
 
-            write_every_five += 1
+            with shelve.open(os.path.join(sys.path[0],cfg.CHAN[1:])) as s:
+                for user in current_users_dict:
+                    if user not in cfg.NO_POINTS:
+                        if user in s:
+                            s[user] += current_users_dict[user]
+                            current_users_dict[user] = 0
 
-            if write_every_five >= 5:
-                with shelve.open(os.path.join(sys.path[0],cfg.CHAN[1:])) as s:
-                    for user in current_users_dict:
-                        if user not in cfg.NO_POINTS:
-                            if user in s:
-                                s[user] += current_users_dict[user]
-                                current_users_dict[user] = 0
-
-                            else:
-                                s[user] = current_users_dict[user]
-                                current_users_dict[user] = 0
+                        else:
+                            s[user] = current_users_dict[user]
+                            current_users_dict[user] = 0
 
                 current_users_dict = {user:0 for user in current_users}
-                write_every_five = 0
 
             if cfg.CHAN[1:] not in new_users:
-                
                 logging.debug('streamer disconnected.')
 
         elif cfg.CHAN[1:] in new_users:
             streamer_online = True
-            write_every_five = 0
+            write_every = 0
             logging.debug('streamer online!')
             timestamped = False
 
-        else: #streamer not in either user set (offline)
+        else: #streamer not in new users or current users (offline)
             streamer_online = False
             logging.debug('streamer offline.')
 
-        if (not streamer_online) and (not timestamped):
+        if (streamer_online == False) and (timestamped == False):
             offline_time = datetime.now()
             timestamped = True
             logging.debug('offline_time set, '\
@@ -259,8 +253,8 @@ def add_points(current_users):
 
         if datetime.now() > reset_claim:
             try:
-                os.remove(os.path.join(sys.path[0],cfg.CHAN[1:]\
-                        +'REDEEMED.db'))
+                os.remove(os.path.join(sys.path[0], (cfg.CHAN[1:]\
+                        +'REDEEMED.db')))
                 logging.debug('file removed, users may redeem again.')
             except:
                 logging.debug('  could not remove "redeemed, "'\
@@ -268,6 +262,10 @@ def add_points(current_users):
             timestamped = False
 
         current_users = new_users
+
+        for user in new_users:
+            if user not in current_users_dict:
+                current_users_dict[user] = 0
 
 
 logging.basicConfig(filename=(os.path.join(sys.path[0], cfg.CHAN[1:]\
