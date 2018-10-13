@@ -194,11 +194,13 @@ def chatbot():
 
 def add_points(current_users):
 
-    current_users_dict = {user:0 for user in current_users}
     streamer_online = False
-    timestamped = False
+    timestamped = False # find a way to check if timestamped
 
     while True: 
+
+        current_users_dict = {user:0 for user in current_users}
+
         sleep(60)
 
         new_users = requests.get('https://tmi.twitch.tv/group/user/'\
@@ -220,21 +222,16 @@ def add_points(current_users):
                 for user in current_users_dict:
                     if user not in cfg.NO_POINTS:
                         if user in s:
-                            s[user] += current_users_dict[user]
-                            current_users_dict[user] = 0
+                            s[user] += 1 
 
                         else:
-                            s[user] = current_users_dict[user]
-                            current_users_dict[user] = 0
-
-                current_users_dict = {user:0 for user in current_users}
+                            s[user] = 1 
 
             if cfg.CHAN[1:] not in new_users:
                 logging.debug('streamer disconnected.')
 
         elif cfg.CHAN[1:] in new_users:
             streamer_online = True
-            write_every = 0
             logging.debug('streamer online!')
             timestamped = False
 
@@ -262,10 +259,6 @@ def add_points(current_users):
             timestamped = False
 
         current_users = new_users
-
-        for user in new_users:
-            if user not in current_users_dict:
-                current_users_dict[user] = 0
 
 
 logging.basicConfig(filename=(os.path.join(sys.path[0], cfg.CHAN[1:]\
